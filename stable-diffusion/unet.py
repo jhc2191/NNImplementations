@@ -66,7 +66,8 @@ class UNet(nn.Module):
             nn.Conv2d(intermediate_dim, out_dim, 3),
         )
 
-    def time_step_embedding(self, time_steps: torch.Tensor, max_period: int = 10000):
+    def time_step_embedding(self, time_steps, max_period=10000):
+        ##from https://github.com/labmlai/annotated_deep_learning_paper_implementations/blob/master/labml_nn/diffusion/stable_diffusion/model/unet.py
         # $\frac{c}{2}$; half the channels are sin and the other half is cos,
         half = self.channels // 2
         # $\frac{1}{10000^{\frac{2i}{c}}}$
@@ -107,3 +108,51 @@ class TimestepEmbedSequential(nn.Sequential):
             else:
                 x = layer(x)
         return x
+
+class UpSample(nn.Module):
+    def __init__(self, intermediate_dim):
+        super().__init__()
+        self.conv = nn.Conv2d(intermediate_dim, intermediate_dim, 3)
+
+    def forward(self, x):
+        x = F.interpolate(x, scale_factor=2)
+        return self.conv(x)
+
+class DownSample(nn.Module):
+    def __init__(self, intermediate_dim):
+        super().__init__()
+        self.conv = nn.Conv2d(intermediate_dim, intermediate_dim, 3, stride=2)
+
+    def forward(self, x):
+        return self.conv(x)
+
+class ResBlock(nn.Module):
+    def __init__(self, intermediate_dim, t_emb_dim, out_dim):
+        super().__init__()
+        self.in_layers = nn.Sequential(
+            nn.GroupNorm(32, intermediate_dim),
+            nn.SiLU(),
+            nn.Conv2d(intermediate_dim, out_dim, 3),
+        )
+        self.emb_layers = nn.Sequential(
+            nn.SiLU(),
+            nn.Linear(t_emb_dim, out_dim),
+        )
+        self.out_layers = nn.Sequential(
+            nn.GroupNorm(32, out_dim),
+            nn.SiLU(),
+            nn.Dropout(0.),
+            nn.Conv2d(out_dim, out_dim, 3)
+        )
+        self.skip_connection = nn.Conv2d(intermediate_dim, out_dim)
+
+    def forward(self, x, t_embeds):
+        """
+        :param x: is the input feature map with shape `[batch_size, channels, height, width]`
+        :param t_emb: is the time step embeddings of shape `[batch_size, d_t_emb]`
+        """
+        h = self.in_layers(x)
+        t_emb = self.emb_layers(t_emb).type(h.dtype)
+        h = h + t_emb[:, :, None, None]
+        h = self.out_layers(h)
+        return self.skip_connection(x) + h
