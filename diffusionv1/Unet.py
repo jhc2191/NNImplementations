@@ -4,7 +4,7 @@ from diffusionv1.Blocks import Block, ResnetBlock
 from diffusionv1.Modules import SinusoidalPositionEmbeddings
 
 class Unet(nn.Module):
-    def __init__(self, dim, init_dim=None, out_dim=None, dim_mults=(1, 2, 4, 8), channels=3, with_time_emb=True):
+    def __init__(self, dim, init_dim=None, out_dim=None, dim_mults=(1, 2, 4, 8), channels=3):
         super().__init__()
 
         # determine dimensions
@@ -28,6 +28,9 @@ class Unet(nn.Module):
         self.downs = nn.ModuleList([])
         self.ups = nn.ModuleList([])
         num_resolutions = len(in_out)
+
+        ###standard diffusion architecture to downsample, have an intermediate bottleneck
+        ###then re-upsample, nothing too out of chracter
 
         for ind, (dim_in, dim_out) in enumerate(in_out):
             is_last = ind >= (num_resolutions - 1)

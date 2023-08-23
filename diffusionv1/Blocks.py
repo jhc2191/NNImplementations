@@ -14,11 +14,12 @@ class Block(nn.Module):
     def forward(self, x):
         x = self.conv(x)
         x = self.norm(x)
-        x = self.act(x)
+        x = self.relu(x)
         return x
 
 class ResnetBlock(nn.Module):
     """https://arxiv.org/abs/1512.03385"""
+    ###this function follows the resnet structure from the paper above
     
     def __init__(self, embed_dim, out_dim, *, time_emb_dim, groups=8):
         super().__init__()

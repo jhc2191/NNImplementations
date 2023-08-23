@@ -10,6 +10,9 @@ class DiffusionModel():
         self.alphas = 1 - self.betas
         self.alphas_cumprod = torch.cumprod(self.alphas, axis=0)
     
+    ##define the forward and backwards sampling process for the model using the 
+    ##standard diffusion SDE's
+    
     def forward(self, x_0, t):
         ## x_0: (batch_size, num_images, height, width), t: (batch_size)
         noise = torch.randn_like(x_0)
