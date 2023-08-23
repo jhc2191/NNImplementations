@@ -16,7 +16,7 @@ class Encoder(nn.Module):
         self.scale = torch.sqrt(torch.FloatTensor([model_dim]))
 
     def forward(self, src, src_mask):
-
+        ##updated embeddings not included in original paper
         src = self.dropout(self.token_embedding(src)*self.scale(src) + self.position_encoding(src))
 
         for layer in self.layers:
@@ -38,6 +38,7 @@ class Encoder_Layer(nn.Module):
         self.dropout = nn.Dropout(dropout)
     
     def forward(self, src, src_mask):
+        ##apply attention and feed forward layers
         src_non_residual, _ = self.self_attention(src, src, src, src_mask)
         src = self.first_layer_norm(src + self.dropout(src_non_residual))
 

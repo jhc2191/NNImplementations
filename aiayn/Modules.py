@@ -61,6 +61,7 @@ class PositionWiseFeedForward(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, src):
+        ##standard feed forward
         residual = src
         src = self.second_linear(F.relu(self.first_linear(src)))
         src = self.dropout(src)
