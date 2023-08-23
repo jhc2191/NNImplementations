@@ -4,10 +4,8 @@ import torch.nn as nn
 from aiayn.Model import PositionalEncoding
 from aiayn.Modules import MultiHeadAttention, PositionWiseFeedForward
 
-##ADD SCALING
-
 class Encoder(nn.Module):
-    def __init__(self, input_dim, encoding_dim, model_dim intermediate_dim, num_layers, num_heads, dropout, k_dim, v_dim, n_position=200):
+    def __init__(self, input_dim, encoding_dim, model_dim, intermediate_dim, num_layers, num_heads, dropout, k_dim, v_dim, n_position=200):
         super().__init__()
 
         self.token_embedding = nn.Embedding(input_dim, encoding_dim)
@@ -15,10 +13,11 @@ class Encoder(nn.Module):
 
         self.layers = nn.ModuleList([Encoder_Layer(model_dim, intermediate_dim, num_heads, k_dim, v_dim, dropout) for _ in range(num_layers)])
         self.dropout = nn.Dropout(dropout)
+        self.scale = torch.sqrt(torch.FloatTensor([model_dim]))
 
     def forward(self, src, src_mask):
-        src = self.token_embedding(src)
-        src = self.dropout(self.position_encoding(src))
+
+        src = self.dropout(self.token_embedding(src)*self.scale(src) + self.position_encoding(src))
 
         for layer in self.layers:
             src = layer(src, src_mask)
